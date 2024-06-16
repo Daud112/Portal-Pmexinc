@@ -1,0 +1,4 @@
+2024-06-09T14:18:27+00:00 CRITICAL Cannot redeclare custom_login_redirect() (previously declared in /home/u136795266/domains/pmexinc.com/public_html/portal.pmexinc.com/wp-content/themes/astra/functions.php:2) in /home/u136795266/domains/pmexinc.com/public_html/portal.pmexinc.com/wp-content/themes/astra/functions.php on line 206
+
+2024-06-09T14:18:33+00:00 CRITICAL Cannot redeclare custom_login_redirect() (previously declared in /home/u136795266/domains/pmexinc.com/public_html/portal.pmexinc.com/wp-content/themes/astra/functions.php:2) in /home/u136795266/domains/pmexinc.com/public_html/portal.pmexinc.com/wp-content/themes/astra/functions.php on line 206
+
