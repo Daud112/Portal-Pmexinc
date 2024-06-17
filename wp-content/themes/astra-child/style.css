@@ -1,0 +1,25 @@
+/*
+ Theme Name:   Astra Child
+ Theme URI:    http://example.com/astra-child
+ Description:  Astra Child Theme
+ Author:       Your Name
+ Author URI:   http://example.com
+ Template:     astra
+ Version:      1.0.0
+ Text Domain:  astra-child
+*/
+
+/* Custom CSS can go here */
+
+
+.w-100{
+    width: 100%;
+}
+
+.user-select{
+    width: 50%;
+}
+
+.select-submit-btn{
+    margin-left: 10px;
+}
