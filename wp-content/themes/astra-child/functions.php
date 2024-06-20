@@ -4,25 +4,23 @@ function astra_child_enqueue_styles() {
     // Enqueue parent theme styles
 wp_enqueue_style('astra-style', get_template_directory_uri() . '/style.css');
 
+    // Enqueue parent theme styles
+    wp_enqueue_style( "parent-style" , get_parent_theme_file_uri( '/style.css' ) );
 
     // Enqueue child theme styles
     wp_enqueue_style('astra-child-style', get_stylesheet_directory_uri() . '/style.css', array('astra-style'), wp_get_theme()->get('Version'));
 
     // Enqueue child theme scripts
     wp_enqueue_script('astra-child-scripts', get_stylesheet_directory_uri() . '/js/scripts.js', array('jquery'), wp_get_theme()->get('Version'), true);
+
+    // Enqueue bootstrap styles
+    wp_enqueue_style( 'bootstrap-css', '//cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' );
+    wp_enqueue_style( 'theme-css', get_stylesheet_uri(), array( 'bootstrap-css' ) );
+
+    // Enqueue bootstrap scripts
+    wp_enqueue_script( 'bootstrap-js', '//cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js' );
 }
 add_action('wp_enqueue_scripts', 'astra_child_enqueue_styles');
-
-
-
-// Enqueue custom scripts and styles
-// function astra_child_enqueue_custom_styles() {
-//     wp_enqueue_style('astra-child-custom-style', get_stylesheet_directory_uri() . '/custom-style.css');
-//     wp_enqueue_script('astra-child-custom-script', get_stylesheet_directory_uri() . '/custom-script.js', array('jquery'), wp_get_theme()->get('Version'), true);
-// }
-// add_action('wp_enqueue_scripts', 'astra_child_enqueue_custom_styles');
-
-
 
 // Function to create a table for storing CSV uploads
 function create_csv_upload_table() {

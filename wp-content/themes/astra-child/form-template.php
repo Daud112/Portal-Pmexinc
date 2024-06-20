@@ -5,6 +5,8 @@ Template Name: Upload Patient Data File Form
 
 get_header();
 
+echo '<div class="container">';
+echo '<h2 class="my-4 fs-1">Upload CSV File</h2>';
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
     // Get current user's info
     $current_user = wp_get_current_user();
@@ -48,24 +50,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
             'upload_date' => current_time('mysql')
         ));
 
-        echo "<p>Patient data file has successfully uploaded.</p> </br>";
-        // echo "<p>File URL: <a href='" . esc_url(site_url() . $relative_url) . "'>" . esc_url(site_url().$relative_url) . "</a></p> </br></br>";
+        echo "<div class='alert alert-success' role='alert'>Patient data file has successfully uploaded.</div>";
+        wp_redirect(site_url() ."/view-patients-data");
     } else {
-        echo "<p>Sorry!! You uploaded wrong patient data file.</p> </br></br>";
+        echo "<div class='d-inline alert alert-danger' role='alert'>Sorry!! You uploaded wrong patient data file.</div>";
 
     }
 }
 
 ?>
-
-<div class="container">
-    <br><br>
-    <h2>Upload CSV File</h2>
+    
     <form action="" method="post" enctype="multipart/form-data">
-        <br><br>
-        <label for="csv_file">CSV File:</label>
-        <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
-        <br><br>
+        <label class="my-2" for="csv_file">CSV File:</label>
+        <div class="input-group my-2">
+            <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv" required>
+            <!-- <label class="input-group-text" for="inputGroupFile02">Upload</label> -->
+        </div>
         <input type="submit" name="submit" value="Upload">
     </form>
 </div>

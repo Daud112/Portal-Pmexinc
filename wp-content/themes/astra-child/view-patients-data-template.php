@@ -17,7 +17,14 @@ if (current_user_can('administrator')) {
 }
 
 // Get all users if the current user is an admin
-$users = current_user_can('administrator') ? get_users() : array($current_user);
+if (current_user_can('administrator')) {
+    $args = array(
+        'role' => 'Doctor'
+    );
+    $users = get_users($args);
+} else {
+    $users = array($current_user);
+}
 
 // Get the selected user's data from wp_csv_uploads table
 global $wpdb;
@@ -31,15 +38,18 @@ if ($selected_username) {
 }
 ?>
 
-<div class="wrap w-100">
-    <h1><?php _e('User CSV Uploads', 'your-text-domain'); ?></h1>
-
+<div class="container">
+    <?php if (current_user_can('administrator')) : ?>
+        <h1 class="my-4 fs-1"><?php echo("Doctor's CSV Uploads"); ?></h1>
+    <?php else : ?>
+        <h1 class="my-4 fs-1"><?php echo('CSV Uploads'); ?></h1>
+    <?php endif;?>
     <?php if (current_user_can('administrator')) : ?>
         <form method="post">
-            <label for="username"><?php _e('Select User', 'your-text-domain'); ?></label>
+            <label for="username"><?php echo('Select Doctor'); ?></label>
             <br>
             <select name="username" id="username" class="user-select">
-                <option value=""><?php _e('Select a user', 'your-text-domain'); ?></option>
+                <option value=""><?php echo('Select a doctor'); ?></option>
                 <?php foreach ($users as $user) : ?>
                     <option value="<?php echo esc_attr($user->user_login); ?>" <?php selected($selected_username, $user->user_login); ?>>
                         <?php echo esc_html($user->display_name); ?>
@@ -47,47 +57,60 @@ if ($selected_username) {
                 <?php endforeach; ?>
             </select>
             
-            <button type="submit" class="select-submit-btn"><?php _e('Show Uploads', 'your-text-domain'); ?></button>
+            <button type="submit" class="select-submit-btn"><?php echo('Show Uploads'); ?></button>
         </form>
     <?php endif; ?>
 
     <?php if ($selected_username && $user_uploads) : ?>
-        <br>
-        <h2><?php _e('User Details:', 'your-text-domain'); ?></h2>
-        <?php $selected_user = get_user_by('login', $selected_username); ?>
-        <p><?php _e('Name', 'your-text-domain'); ?>: <?php echo esc_html($selected_user->display_name); ?></p>
-        <p><?php _e('Email', 'your-text-domain'); ?>: <?php echo esc_html($selected_user->user_email); ?></p>
 
-        <h2><?php _e('Uploaded CSV Files', 'your-text-domain'); ?></h2>
-        <ul>
-            <?php foreach ($user_uploads as $upload) : ?>
-                <li>
-                    <a href="<?php echo esc_url($upload->file_url); ?>" target="_blank">
-                        <?php echo esc_html(basename($upload->file_url)); ?>
-                    </a>
-                    (<?php echo esc_html($upload->upload_date); ?>)
-                </li>
-            <?php endforeach; ?>
-        </ul>
+        <div class="fs-4"><?php echo('User Details'); ?></div>
 
-        <h2><?php _e('CSV Files Data', 'your-text-domain'); ?></h2>
+        <div class="row">
+            <div class="col-12 col-sm-12 col-md-6 col-lg-6">
+                <p> <?php echo('Name'); ?>: <?php echo($current_user->display_name); ?></p>
+            </div>
+            <div class="col-12 col-sm-12 col-md-6 col-lg-6">
+                <!-- <?php $selected_user = get_user_by('login', $selected_username); ?> -->
+                <p><?php echo('Email'); ?>: <?php echo($current_user->user_email); ?></p>
+            </div>
+        </div>
+
+        <div class="fs-4 my-2"><?php echo('CSV Files Data'); ?></div>
         <?php foreach ($user_uploads as $upload) : ?>
-            <h3><?php echo esc_html(basename($upload->file_url)); ?></h3>
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-6 col-lg-6">
+                    <?php echo esc_html(basename($upload->file_url)); ?>
+                </div>
+                <div class="col-12 col-sm-12 col-md-6 col-lg-6 text-start text-sm-start text-md-end d-flex flex-column ">
+                    <div>
+                        <a href="<?php echo esc_url(site_url() .$upload->file_url); ?>" target="_blank" class="text-decoration-none btn btn-primary my-1">
+                            Download
+                        </a>
+                    </div>
+                    <div>                    
+                        Created At: <?php echo esc_html($upload->upload_date); ?>
+                    </div>
+                </div>
+            </div>
         </br>
             <?php
             // Convert the URL to a local file path
             $file_path = esc_url(site_url() .  $upload->file_url); 
 
             if (($handle = fopen($file_path, "r")) !== FALSE) {
-                echo '<table border="1" cellpadding="5" cellspacing="0">';
+                echo '<div class="table-responsive">';
+                echo '<table class="table table-hover border-1">';
                 $header = fgetcsv($handle);
                 if ($header) {
+                    echo '<thead>';
                     echo '<tr>';
                     foreach ($header as $column) {
                         echo '<th>' . esc_html($column) . '</th>';
                     }
                     echo '</tr>';
+                    echo '</thead>';
                 }
+                echo '<tbody>';
                 while (($data = fgetcsv($handle)) !== FALSE) {
                     echo '<tr>';
                     foreach ($data as $cell) {
@@ -95,16 +118,18 @@ if ($selected_username) {
                     }
                     echo '</tr>';
                 }
+                echo '</tbody>';
                 echo '</table>';
+                echo '</div>';
                 fclose($handle);
             } else {
-                echo '<p>' . __('Unable to open file.', 'your-text-domain') . '</p>';
+                echo '<p>' . __('Unable to open file.') . '</p>';
             }
             ?>
         <?php endforeach; ?>
 
     <?php elseif ($selected_username) : ?>
-        <p><?php _e('No CSV uploads found for this user.', 'your-text-domain'); ?></p>
+        <p><?php echo('No CSV uploads found for this user.'); ?></p>
     <?php endif; ?>
 </div>
 
