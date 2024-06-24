@@ -151,16 +151,29 @@ if ($selected_username) {
                         <div class="card-body">
                             <p class="card-text">Uploaded on: <?php echo date('F j, Y', strtotime($upload->upload_date)); ?></p>
                             </div>
-                            <div class="card-footer border-0 bg-white">
-                                
-                                <a href="#" class="btn btn-primary open-file-popup" data-url="<?php echo esc_url(site_url().$upload->file_url); ?>">View</a>
-                                <!-- <a type="button" href="<?php site_url().$upload->file_url ?>" class="btn btn-info file-download-link text-white" download>Download</a> -->
-                                <form action="" method="post" class="d-inline">
-                                    <input name="DeleteFile" value="deletefile" hidden/>
-                                    <input name="fileUrl" value="<?php echo site_url().$upload->file_url ?>" hidden/>
-                                    <input name="uploadsId" value="<?php echo $upload->id ?>" hidden/>
-                                    <button type="submit" class="btn btn-danger">Delete</button>
-                                </form>
+                            <div class="card-footer border-0 bg-white text-center">
+                                <div class="dropdown">
+                                    <button class="btn btn-primary dropdown-toggle px-5" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="dropdownMenuButton1">
+                                        <li>
+                                            <a href="#" class="btn btn-primary open-file-popup dropdown-item fw-medium px-5" data-url="<?php echo esc_url(site_url().$upload->file_url); ?>">View</a>
+                                        </li>
+                                        <li>
+                                            <form action="" method="post" class="d-inline">
+                                                <input name="DeleteFile" value="deletefile" hidden/>
+                                                <input name="fileUrl" value="<?php echo site_url().$upload->file_url ?>" hidden/>
+                                                <input name="uploadsId" value="<?php echo $upload->id ?>" hidden/>
+                                                <button type="submit" class="btn btn-danger dropdown-item fw-medium px-5">Delete</button>
+                                            </form>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a type="button" href="<?php echo esc_url(site_url().$upload->file_url); ?>" class="btn btn-secondary dropdown-item fw-medium px-5" download>Download</a>
+                                        </li>
+                                    </ul>
+                                </div>                                
                         </div>
                     </div>
                 </div>
