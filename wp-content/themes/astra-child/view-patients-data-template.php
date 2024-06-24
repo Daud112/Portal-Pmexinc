@@ -10,39 +10,130 @@ $current_user = wp_get_current_user();
 $selected_username = '';
 
 if (current_user_can('administrator')) {
-    $selected_username = isset($_POST['username']) ? sanitize_text_field($_POST['username']) : '';
+    $selected_username = isset($_GET['username']) ? sanitize_text_field($_GET['username']) : '';
 } else {
     $selected_username = $current_user->user_login;
 }
 
-// Get all users if the current user is an admin
-if (current_user_can('administrator')) {
-    $args = array(
-        'role' => 'Doctor'
-    );
-    $users = get_users($args);
-} else {
-    $users = array($current_user);
+// Initialize variables for date filtering
+$filter_type = isset($_GET['filter']) ? $_GET['filter'] : 'all';
+$custom_start_date = isset($_GET['start_date']) ? sanitize_text_field($_GET['start_date']) : '';
+$custom_end_date = isset($_GET['end_date']) ? sanitize_text_field($_GET['end_date']) : '';
+
+// Construct the WHERE clause based on filter type and custom dates
+$where_clause = '';
+switch ($filter_type) {
+    case 'today':
+        $where_clause = "DATE(upload_date) = CURDATE()";
+        break;
+    case 'this_week':
+        $where_clause = "YEARWEEK(upload_date, 1) = YEARWEEK(CURDATE(), 1)";
+        break;
+    case 'this_month':
+        $where_clause = "MONTH(upload_date) = MONTH(CURDATE()) AND YEAR(upload_date) = YEAR(CURDATE())";
+        break;
+    case 'custom':
+        if (!empty($custom_start_date) && !empty($custom_end_date)) {
+            $where_clause = $wpdb->prepare("upload_date BETWEEN %s AND %s", $custom_start_date, $custom_end_date);
+        }
+        break;
+    default:
+        // No filter applied (all uploads)
+        break;
 }
 
-// Get the selected user's data from wp_csv_uploads table
+// Get the selected user's data from wp_csv_uploads table based on the filter
 global $wpdb;
 $user_uploads = [];
 if ($selected_username) {
     $table_name = $wpdb->prefix . 'csv_uploads';
-    $user_uploads = $wpdb->get_results($wpdb->prepare(
-        "SELECT * FROM $table_name WHERE name = %s ORDER BY upload_date DESC",
-        $selected_username
-    ));
+    
+    // Construct the SQL query with the WHERE clause
+    $query = "SELECT * FROM $table_name WHERE name = %s";
+
+    if (!empty($where_clause)) {
+        $query .= " AND $where_clause";
+    }
+    $query .= " ORDER BY upload_date DESC";
+
+    // Execute the query
+    $user_uploads = $wpdb->get_results($wpdb->prepare($query, $selected_username));
 }
+
+    // Get all users if the current user is an admin
+    if (current_user_can('administrator')) {
+        $args = array(
+            'role' => 'Doctor'
+        );
+        $users = get_users($args);
+    } else {
+        $users = array($current_user);
+    }
+
 ?>
 
 <div class="container">
     <?php if (current_user_can('administrator')) : ?>
-        <h1 class="my-4 fs-1">Doctor's CSV Uploads</h1>
+        <h1 class="my-4 fs-1">Doctor's Uploads</h1>
     <?php else : ?>
         <h1 class="my-4 fs-1">Your Uploads</h1>
     <?php endif;?>
+
+    <!-- Filter form -->
+    <form method="GET" action="" name="filterForm" id="filterForm" class="my-2">
+        <?php if (current_user_can('administrator')) : ?>
+            <div class="w-100 mb-3 d-flex justify-content-center">
+                <select name="username" id="username" class="user-select">
+                        <option value="">Select a doctor</option>
+                    <?php foreach ($users as $user) : ?>
+                    <option value="<?php echo esc_attr($user->user_login); ?>" <?php selected($selected_username, $user->user_login); ?>>
+                        <?php echo esc_html($user->display_name); ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        <?php endif; ?>
+
+        <div class="w-100 mb-3 d-flex justify-content-center">
+            <!-- <label for="filter" class="fs-6 me-2">Filter by:</label> -->
+            <div class="form-check form-check-inline me-1">
+                <input class="btn-check" type="radio" name="filter" id="filter-all" value="all" <?php checked($filter_type, 'all'); ?>>
+                <label class="btn btn-outline-success text-nowrap" autocomplete="off" for="filter-all">All</label>
+            </div>
+            <div class="form-check form-check-inline mx-1">
+                <input class="btn-check" type="radio" name="filter" id="filter-today" value="today" <?php checked($filter_type, 'today'); ?>>
+                <label class="btn btn-outline-success text-nowrap" autocomplete="off" for="filter-today">Today</label>
+            </div>
+            <div class="form-check form-check-inline mx-1">
+                <input class="btn-check" type="radio" name="filter" id="filter-this-week" value="this_week" <?php checked($filter_type, 'this_week'); ?>>
+                <label class="btn btn-outline-success text-nowrap" autocomplete="off" for="filter-this-week">This Week</label>
+            </div>
+            <div class="form-check form-check-inline mx-1">
+                <input class="btn-check" type="radio" name="filter" id="filter-this-month" value="this_month" <?php checked($filter_type, 'this_month'); ?>>
+                <label class="btn btn-outline-success text-nowrap" autocomplete="off" for="filter-this-month">This Month</label>
+            </div>
+            <div class="form-check form-check-inline ms-1">
+                <input class="btn-check" type="radio" name="filter" id="filter-custom" value="custom" <?php checked($filter_type, 'custom'); ?>>
+                <label class="btn btn-outline-success text-nowrap" autocomplete="off" for="filter-custom">Custom Dates</label>
+            </div>
+        </div>
+        <div class="row mb-3 <?php echo ($filter_type=="custom") ? 'd-block' : 'd-none'; ?>" id="custom-date-range">
+            <div class="col-12">
+                <input type="date" class="form-control h-50 my-2 w-50 mx-auto" id="start_date" name="start_date" value="<?php echo esc_attr($custom_start_date); ?>">
+            </div>
+            <div class="col-12 my-2 text-center">to</div>
+            <div class="col-12">
+                <input type="date" class="form-control h-50 my-2 w-50 mx-auto" id="end_date" name="end_date" value="<?php echo esc_attr($custom_end_date); ?>">
+            </div>
+        </div>
+        <div class="row d-flex justify-content-center">
+            <button type="submit" class="btn btn-success mt-2 mb-3 w-25 d-block">Apply Filter</button>
+        </div>
+        <div class="row d-flex justify-content-center">
+            <button type="reset" class="btn btn-secondary mb-3 w-25 reset-filter d-block">Clear Filter</button>
+        </div>
+    </form>
+    
     <?php 
         if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_POST['DeleteFile'] == 'deletefile') {
             // Sanitize and retrieve posted data
@@ -69,7 +160,6 @@ if ($selected_username) {
                         echo "<div class='alert alert-success' role='alert'>File deleted successfully.</div>";
                         // Redirect to view-patients-data after 5 seconds
                         echo '<script>
-                            console.log("TESTESRESDASDD");
                             setTimeout(function() {
                                 window.location.href = "' . site_url('/view-patients-data') . '";
                             }, 50); // 1000 milliseconds = 5 seconds
@@ -85,30 +175,16 @@ if ($selected_username) {
             } 
         }
     ?>
-    <?php if (current_user_can('administrator')) : ?>
-        <form method="post">
-            <label for="username">Select Doctor</label>
-            <br>
-            <select name="username" id="username" class="user-select">
-                <option value="">Select a doctor</option>
-                <?php foreach ($users as $user) : ?>
-                    <option value="<?php echo esc_attr($user->user_login); ?>" <?php selected($selected_username, $user->user_login); ?>>
-                        <?php echo esc_html($user->display_name); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <button type="submit" class="select-submit-btn">Show Uploads</button>
-        </form>
-    <?php endif; ?>
+
 
     <?php if ($selected_username && $user_uploads) : ?>
         <?php if (current_user_can('administrator')) : ?>
             <div class="row my-2">
                 <div class="col-12 col-sm-12 col-md-6 col-lg-6">
-                    <p> <span class="fw-bold">Name:</span> <?php echo($current_user->display_name); ?></p>
+                    <div class="d-flex justify-content-center fs-6"> <p class="fw-bold">Name: </p> <?php  echo($current_user->display_name); ?></div>
                 </div>
                 <div class="col-12 col-sm-12 col-md-6 col-lg-6">
-                    <p><span class="fw-bold"> Email:</span> <?php echo($current_user->user_email); ?></p>
+                    <div class="d-flex justify-content-center fs-6"><p class="fw-bold"> Email: </p> <?php echo($current_user->user_email); ?></div>
                 </div>
             </div>
             <div class="fs-4 my-2">Records</div>
@@ -216,7 +292,7 @@ if ($selected_username) {
 </style>
 
 <script>
-    jQuery(document).ready(function($) {
+    jQuery(document, window).ready(function($) {
         $('.open-file-popup').on('click', function(e) {
             e.preventDefault();
             var fileUrl = $(this).data('url');
@@ -233,6 +309,33 @@ if ($selected_username) {
             if ($(e.target).is('#file-popup-modal')) {
                 $('#file-popup-modal').hide();
             }
+        });
+
+        var rad = document.filterForm.filter;
+        var prev = null;
+        var current_select = "";
+        const customDateRange = document.getElementById('custom-date-range');
+
+        for (var i = 0; i < rad.length; i++) {
+            rad[i].addEventListener('change', function() {
+                (prev) ? console.log(prev.value): null;
+                if (this !== prev) {
+                    prev = this;
+                }
+                current_select = this.value;
+                if (current_select == 'custom') {
+                    customDateRange.classList.add('d-block');
+                    customDateRange.classList.remove('d-none');
+                } else {
+                    customDateRange.classList.add('d-none');
+                    customDateRange.classList.remove('d-block');
+                }
+            });
+        }
+
+        $('.reset-filter').on('click', function() {
+            var base_url = window.location.origin + '/' + window.location.pathname.split ('/') [1] + '/';
+            window.location.replace(base_url + '/view-patients-data');
         });
 });
 </script>
