@@ -31,7 +31,7 @@ $user_uploads = [];
 if ($selected_username) {
     $table_name = $wpdb->prefix . 'csv_uploads';
     $user_uploads = $wpdb->get_results($wpdb->prepare(
-        "SELECT * FROM $table_name WHERE name = %s",
+        "SELECT * FROM $table_name WHERE name = %s ORDER BY upload_date DESC",
         $selected_username
     ));
 }
@@ -103,7 +103,7 @@ if ($selected_username) {
 
     <?php if ($selected_username && $user_uploads) : ?>
         <?php if (current_user_can('administrator')) : ?>
-            <div class="row">
+            <div class="row my-2">
                 <div class="col-12 col-sm-12 col-md-6 col-lg-6">
                     <p> <span class="fw-bold">Name:</span> <?php echo($current_user->display_name); ?></p>
                 </div>
@@ -111,8 +111,8 @@ if ($selected_username) {
                     <p><span class="fw-bold"> Email:</span> <?php echo($current_user->user_email); ?></p>
                 </div>
             </div>
+            <div class="fs-4 my-2">Records</div>
         <?php endif; ?>
-        <div class="fs-4 my-2">Records</div>
 
         <!-- User file uploads for preview and show cards below -->
         <div class="row">
@@ -149,8 +149,8 @@ if ($selected_username) {
                             </div>
                         <?php } ?>
                         <div class="card-body">
-                            <p class="card-text">Uploaded on: <?php echo date('F j, Y', strtotime($upload->upload_date)); ?></p>
-                            </div>
+                            <p class="card-text">Uploaded at: </br> <?php echo date('j-M-Y g:i A', strtotime($upload->upload_date)); ?></p>
+                        </div>
                             <div class="card-footer border-0 bg-white text-center">
                                 <div class="dropdown">
                                     <button class="btn btn-primary dropdown-toggle px-5" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">

@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                     'name' => $name,
                     'email' => $email,
                     'file_url' => $relative_url,
-                    'upload_date' => current_time('mysql')
+                    'upload_date' => current_datetime()->format('Y-m-d H:i:s')
                 ));
                 wp_cache_flush();
                 echo "<div class='alert alert-success' role='alert'>Your record successfully uploaded.</div>";
