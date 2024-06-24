@@ -1,8 +1,15 @@
 <?php
 
+// Initilizing hooks
+add_action('wp_enqueue_scripts', 'astra_child_enqueue_styles');
+add_action('after_switch_theme', 'create_csv_upload_table');
+add_action('init', 'clear_cache');
+
+
+
 function astra_child_enqueue_styles() {
     // Enqueue parent theme styles
-wp_enqueue_style('astra-style', get_template_directory_uri() . '/style.css');
+    wp_enqueue_style('astra-style', get_template_directory_uri() . '/style.css');
 
     // Enqueue parent theme styles
     wp_enqueue_style( "parent-style" , get_parent_theme_file_uri( '/style.css' ) );
@@ -20,7 +27,6 @@ wp_enqueue_style('astra-style', get_template_directory_uri() . '/style.css');
     // Enqueue bootstrap scripts
     wp_enqueue_script( 'bootstrap-js', '//cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js' );
 }
-add_action('wp_enqueue_scripts', 'astra_child_enqueue_styles');
 
 // Function to create a table for storing CSV uploads
 function create_csv_upload_table() {
@@ -41,5 +47,8 @@ function create_csv_upload_table() {
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     dbDelta($sql);
 }
-add_action('after_switch_theme', 'create_csv_upload_table');
 
+
+function clear_cache() {
+    wp_cache_flush();
+}
