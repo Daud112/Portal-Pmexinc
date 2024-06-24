@@ -66,7 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit'])) {
                 wp_cache_flush();
                 echo "<div class='alert alert-success' role='alert'>Your record successfully uploaded.</div>";
                 unset($record_file); // Clear file info
-                wp_redirect(site_url() ."/upload-patients-csv");
+                // wp_redirect(site_url() ."/upload-patients-csv");
+                echo '<script>
+                    setTimeout(function() {
+                        window.location.href = "' . site_url('/upload-patients-csv') . '";
+                    }, 50); // 1000 milliseconds = 0.5 seconds
+                </script>';
             } else {
                 echo "<div class='d-block alert alert-danger' role='alert'>Your record is not uploaded.</div>";
                 unset($record_file); // Clear file info

@@ -5,7 +5,6 @@ Template Name: View Patient's Data
 
 get_header();
 
-
 // Handle form submission and get selected username
 $current_user = wp_get_current_user();
 $selected_username = '';
@@ -44,6 +43,48 @@ if ($selected_username) {
     <?php else : ?>
         <h1 class="my-4 fs-1">Your Uploads</h1>
     <?php endif;?>
+    <?php 
+        if ($_SERVER['REQUEST_METHOD'] == 'POST' && $_POST['DeleteFile'] == 'deletefile') {
+            // Sanitize and retrieve posted data
+            $fileUrl = isset($_POST['fileUrl']) ? $_POST['fileUrl'] : '';
+            $uploadsId = isset($_POST['uploadsId']) ? $_POST['uploadsId'] : '';
+        
+            // Check if $fileUrl and $uploadsId are not empty
+            if (!empty($fileUrl) && !empty($uploadsId)) {
+                // Convert file URL to server path
+                $file_path = str_replace(site_url(), ABSPATH, $fileUrl);
+        
+                // Check if the file exists before attempting deletion
+                if (file_exists($file_path)) {
+                    // Attempt to delete the file
+                    if (unlink($file_path)) {
+                        // File deletion successful, now delete from database
+                        global $wpdb;
+                        $table_name = $wpdb->prefix . 'csv_uploads';
+        
+                        // Use $wpdb->delete to remove the row from the database table
+                        $wpdb->delete($table_name, array('id' => $uploadsId));
+        
+                        // Send success response
+                        echo "<div class='alert alert-success' role='alert'>File deleted successfully.</div>";
+                        // Redirect to view-patients-data after 5 seconds
+                        echo '<script>
+                            console.log("TESTESRESDASDD");
+                            setTimeout(function() {
+                                window.location.href = "' . site_url('/view-patients-data') . '";
+                            }, 50); // 1000 milliseconds = 5 seconds
+                        </script>';
+                    } else {
+                        // File deletion failed
+                        echo "<div class='d-block alert alert-danger' role='alert'>Failed to delete file.</div>";
+                    }
+                } else {
+                    // File does not exist
+                    echo "<div class='d-block alert alert-danger' role='alert'>File does not exist.</div>";
+                }
+            } 
+        }
+    ?>
     <?php if (current_user_can('administrator')) : ?>
         <form method="post">
             <label for="username">Select Doctor</label>
@@ -77,7 +118,7 @@ if ($selected_username) {
         <div class="row">
             <?php foreach ($user_uploads as $upload) : ?>
                 <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
-                    <div class="card">
+                    <div class="card h-100 rounded-1">
                         <?php
                             // Display image preview
                             $file_extension = strtolower(pathinfo(site_url().$upload->file_url, PATHINFO_EXTENSION));
@@ -99,8 +140,8 @@ if ($selected_username) {
                                 <img src="<?php echo esc_url(site_url().'/wp-content/themes/astra-child/public/images/txt.png') ?>" class="card-img-top file-preview p-2 w-25 h-50 my-auto"alt="Excel file">
                             </div>
                         <?php } elseif($file_extension == 'pdf') { ?>
-                            <div class="card-img-top text-center pt-4 file-preview" data-url="<?php echo esc_url(site_url().$upload->file_url); ?>">
-                                <iframe src="<?php echo esc_url(site_url().$upload->file_url) ?>" class="w-100 h-100 border-0 overflow-hidden"></iframe>';
+                            <div class="card-img-top card-height text-center file-preview" data-url="<?php echo esc_url(site_url().$upload->file_url); ?>">
+                                <iframe src="<?php echo esc_url(site_url().$upload->file_url) ?>" class="w-100 h-100 border-0 overflow-hidden"></iframe>
                             </div>
                         <?php } else { ?>
                             <div class="w-100 card-height">
@@ -109,9 +150,17 @@ if ($selected_username) {
                         <?php } ?>
                         <div class="card-body">
                             <p class="card-text">Uploaded on: <?php echo date('F j, Y', strtotime($upload->upload_date)); ?></p>
-                            <a href="#" class="btn btn-primary open-file-popup" data-url="<?php echo esc_url(site_url().$upload->file_url); ?>">View</a>
-                            <!-- <a type="button" href="<?php site_url().$upload->file_url ?>" class="btn btn-info file-download-link text-white" download>Download</a> -->
-                            <a href="#" class="btn btn-danger">Delete</a>
+                            </div>
+                            <div class="card-footer border-0 bg-white">
+                                
+                                <a href="#" class="btn btn-primary open-file-popup" data-url="<?php echo esc_url(site_url().$upload->file_url); ?>">View</a>
+                                <!-- <a type="button" href="<?php site_url().$upload->file_url ?>" class="btn btn-info file-download-link text-white" download>Download</a> -->
+                                <form action="" method="post" class="d-inline">
+                                    <input name="DeleteFile" value="deletefile" hidden/>
+                                    <input name="fileUrl" value="<?php echo site_url().$upload->file_url ?>" hidden/>
+                                    <input name="uploadsId" value="<?php echo $upload->id ?>" hidden/>
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
                         </div>
                     </div>
                 </div>
@@ -119,7 +168,7 @@ if ($selected_username) {
         </div>
 
     <?php elseif ($selected_username) : ?>
-        <p>No CSV uploads found for this user.</p>
+        <p>Sorry! No records found.</p>
     <?php endif; ?>
 </div>
 
@@ -148,36 +197,30 @@ if ($selected_username) {
         justify-content: center;
         align-items: center;
     }
-
-    /* .modal-content {
-        padding: 20px;
-        border-radius: 5px;
-        overflow: auto;
-    } */
     .card-height{
-        height: 205px;
+        height: 200px;
     }
 </style>
 
 <script>
-jQuery(document).ready(function($) {
-    $('.open-file-popup').on('click', function(e) {
-        e.preventDefault();
-        var fileUrl = $(this).data('url');
-        $('#file-preview-container').html('<iframe src="' + fileUrl + '" style="width: 100%; height: 100%; border: none;"></iframe>');
-        $('a.file-download-link').attr('href', fileUrl);
-        $('#file-popup-modal').show();
-    });
+    jQuery(document).ready(function($) {
+        $('.open-file-popup').on('click', function(e) {
+            e.preventDefault();
+            var fileUrl = $(this).data('url');
+            $('#file-preview-container').html('<iframe src="' + fileUrl + '" style="width: 100%; height: 100%; border: none;"></iframe>');
+            $('a.file-download-link').attr('href', fileUrl);
+            $('#file-popup-modal').show();
+        });
 
-    $('.close-popup').on('click', function() {
-        $('#file-popup-modal').hide();
-    });
-
-    $(document).on('click', function(e) {
-        if ($(e.target).is('#file-popup-modal')) {
+        $('.close-popup').on('click', function() {
             $('#file-popup-modal').hide();
-        }
-    });
+        });
+
+        $(document).on('click', function(e) {
+            if ($(e.target).is('#file-popup-modal')) {
+                $('#file-popup-modal').hide();
+            }
+        });
 });
 </script>
 
